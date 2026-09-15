@@ -405,7 +405,7 @@ html, body {
   min-width: 128px;
   padding: 0.4rem 1rem;
   border-radius: 999px;
-  background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+  background: linear-gradient(180deg, #d9b876, #a8792f); /* dorado fijo, no depende del --gold oscurecido dentro de la tarjeta */
   box-shadow: 0 6px 14px rgba(0,0,0,0.5);
   display: flex;
   align-items: center;
@@ -426,7 +426,7 @@ html, body {
 
 .wax-seal.is-extractivo {
   background: linear-gradient(180deg, var(--lacre-bright), var(--lacre));
-  color: var(--parchment);
+  color: #f5ece0; /* texto claro fijo — sobre este rojo se lee mejor que el negro que usa el resto de la tarjeta */
 }
 
 /* --------------------------------------------------------------------------
@@ -547,14 +547,14 @@ html, body {
   padding: 0.7rem 1.4rem;
   border-radius: var(--radius);
   border: 1px solid var(--card-border);
-  background: var(--gold);
+  background: #c08a45; /* dorado fijo, no depende del --gold oscurecido dentro del modal */
   color: var(--ink-deep);
   cursor: pointer;
   font-weight: 600;
 }
 
 .help-modal__btn:hover {
-  background: var(--gold-bright);
+  background: #d9b876;
 }
 
 .help-modal__btn--ghost {
@@ -685,7 +685,7 @@ html, body {
   font-family: var(--font-body);
   font-size: 0.9rem;
   padding: 0.55rem 1.1rem;
-  background: var(--gold);
+  background: #c08a45; /* dorado fijo, no depende del --gold oscurecido dentro de la tarjeta */
   color: var(--ink-deep);
   border: none;
   border-radius: var(--radius);
@@ -694,7 +694,7 @@ html, body {
 }
 
 .impact-continue-btn:hover {
-  background: var(--gold-bright);
+  background: #d9b876;
 }
 
 .impact-continue-btn:focus-visible {
