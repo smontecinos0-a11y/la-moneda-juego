@@ -678,6 +678,82 @@ html, body {
   margin-bottom: 0.9rem;
 }
 
+/* ==========================================================================
+   BALANCE DE FASE — pantalla de cierre entre fases (qué pasó, qué había que
+   trabajar, cómo llegas y en qué enfocarte)
+   ========================================================================== */
+.phase-balance__block {
+  margin: 0 0 1.15rem;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity var(--transition-liquid), transform var(--transition-liquid);
+}
+.phase-balance__block.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.phase-balance__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--gold);
+  margin-bottom: 0.4rem;
+}
+.phase-balance__text {
+  margin: 0 0 0.55rem;
+  line-height: 1.55;
+}
+.phase-balance__text:last-child { margin-bottom: 0; }
+.phase-balance__list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+.phase-balance__list li {
+  margin: 0 0 0.45rem;
+  line-height: 1.5;
+}
+.phase-balance__block--status {
+  padding: 0.8rem 1rem;
+  border-left: 3px solid var(--gold);
+  background: rgba(128, 118, 96, 0.10);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.phase-balance__text--warn { color: #b23b2f; }
+body.reading-mode .phase-balance__text--warn { color: #8f2a20; }
+
+.impact-extra {
+  margin: 0 0 0.9rem;
+  padding: 0.7rem 0.9rem;
+  border-left: 3px solid var(--gold);
+  background: rgba(128, 118, 96, 0.10);
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+.impact-extra--bad  { border-left-color: #b23b2f; }
+.impact-extra--good { border-left-color: #6f9a63; }
+.impact-extra__label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--parchment-dim);
+  margin-bottom: 0.3rem;
+}
+.impact-extra__text {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+.impact-extra__lesson {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--parchment-dim);
+  font-style: italic;
+}
+
 .impact-continue-btn {
   display: inline-flex;
   align-items: center;
@@ -1553,7 +1629,8 @@ body.reading-mode .stage-vignette-overlay {
 
       <div class="help-modal__section">
         <h3>¿Cómo se juega?</h3>
-        <p>En cada sección vas a leer una situación y vas a tener que elegir un decreto entre 3 opciones. No hay una opción "correcta": cada una beneficia más a un grupo distinto y tiene un costo distinto. Bajo cada opción vas a ver una frase en cursiva: es la estimación técnica del equipo asesor sobre qué indicadores se moverían.</p>
+        <p>En cada sección vas a leer una situación y vas a tener que elegir un decreto entre 3 opciones. No hay una opción "correcta": cada una beneficia más a un grupo distinto y tiene un costo distinto. Nadie te dice qué indicadores se van a mover: tendrás que razonarlo tú, con lo que sabes de economía y de política.</p>
+        <p>Al terminar cada fase verás un balance: qué pasó, qué concepto de economía y política había que trabajar, cómo llegas a la siguiente fase y en qué conviene enfocarte. Léelo con calma y presiona "Continuar a la siguiente fase" cuando estés listo.</p>
         <p>Debajo de la narrativa de cada sección vas a ver un recuadro con el ícono 📘 — es información de contexto (qué está pasando, por qué importa, qué puede salir mal) para entender la decisión sin necesidad de saber economía. Aparece desde la primera sección en adelante; el prólogo es solo historia, sin recuadro.</p>
         <p>Después de elegir, vas a ver un breve párrafo de "Consecuencia de tu decisión" — léelo con calma, no avanza solo, tienes que presionar "Continuar" cuando estés listo.</p>
         <p>Tu partida se guarda automáticamente después de cada decisión, en este mismo navegador. Puedes cerrar la pestaña y volver cuando quieras — vas a encontrar la opción "Continuar Partida" al abrir el juego de nuevo.</p>
@@ -1582,6 +1659,11 @@ body.reading-mode .stage-vignette-overlay {
       <div class="help-modal__section">
         <h3>Poder repartido o concentrado</h3>
         <p>Cada vez que decides algo, va a aparecer una etiqueta arriba de la tarjeta que dice "Poder repartido" (dorada) si tu decisión benefició a varios actores por igual, o "Poder concentrado" (roja) si benefició solo a un grupo reducido. Se lee sola, sin que tengas que hacer nada más — funciona igual en el celular y en el computador. Al final del juego, este historial —junto al Tesoro y la Inestabilidad— define uno de tres finales posibles para tu gobierno.</p>
+      </div>
+
+      <div class="help-modal__section">
+        <h3>El azar también gobierna</h3>
+        <p>Gobernar no es una ecuación exacta. Un decreto aprobado puede salir mejor o peor de lo previsto, y pueden ocurrir imprevistos: un paro, un alza del petróleo, un buen año agrícola. Las opciones aparecen en distinto orden en cada partida y no hay una posición que sea siempre la mejor. Si tienes margen en un indicador, un golpe externo se amortigua; si ya estaba frágil, pega más fuerte.</p>
       </div>
 
       <div class="help-modal__section">
@@ -1928,7 +2010,17 @@ const GameState = {
 
   // Metadatos de sesión (no son "variables de juego", pero el motor los necesita)
   currentSectionId: 1,
-  history: [] // pila de {sectionId, optionId, timestamp} para depuración / analítica
+  history: [], // pila de {sectionId, optionId, timestamp} para depuración / analítica
+
+  // Aleatoriedad (ver sección 4f). Las semillas viven en el estado para que
+  // Atrás/Adelante y recargar la página no permitan "relanzar el dado".
+  rngState: (Math.random() * 4294967296) >>> 0,
+  shuffleSeed: (Math.random() * 4294967296) >>> 0,
+  eventCooldown: 0,
+
+  // Balance de fase pendiente de leer (id de la sección que abre la fase).
+  // Permite retomar en el balance si el jugador cierra o usa Atrás/Adelante.
+  pendingBalance: null
 };
 
 /** Rango válido de las variables porcentuales. Se aplica un clamp tras cada suma. */
@@ -2062,7 +2154,9 @@ async function renderSection(sectionData) {
   // 2. Metadatos de cabecera
   DOM.eyebrow.textContent = sectionData.id === 'prologue'
     ? 'Prólogo'
-    : `Sección ${sectionData.id} — Fase ${sectionData.phase}`;
+    : (typeof sectionData.id === 'string' && sectionData.id.startsWith('transition-'))
+      ? 'Balance de fase'
+      : `Sección ${sectionData.id} — Fase ${sectionData.phase}`;
   DOM.title.textContent = sectionData.title;
 
   // 3. Narrativa: cada párrafo entra secuencialmente (efecto de lectura líquida,
@@ -2085,7 +2179,7 @@ async function renderSection(sectionData) {
   renderDossier(sectionData.educationalBox);
 
   // 5. Opciones de decreto (si la sección las tiene; la 280 no las tiene).
-  renderOptions(sectionData.options || []);
+  renderOptions(sectionData.options || [], sectionData.id);
 
   // 6. Secciones de transición forzosa (ej. 22-B, Intervención del FMI):
   //    no muestran botones de decreto; el motor aplica automáticamente el
@@ -2220,15 +2314,15 @@ function generateAdvisorHint(modifiers) {
   }
   // Máximo 2 efectos para que la sugerencia siga siendo breve y escaneable.
   const shown = effects.slice(0, 2).join('; ');
-  return `Estimación técnica: ${shown}.`;
+  return `Estimación técnica: ${shown}. El resultado real puede variar.`;
 }
 
 /** Renderiza los botones de opción y liga cada uno a applyOption. Debajo de
  *  cada botón inyecta la Sugerencia del Equipo Asesor, generada en vivo a
  *  partir de los modificadores reales de esa opción (ver generateAdvisorHint). */
-function renderOptions(options) {
+function renderOptions(options, sectionId) {
   DOM.options.innerHTML = '';
-  options.forEach(opt => {
+  shuffleOptionsForSection(options, sectionId).forEach((opt, index) => {
     const wrapper = document.createElement('div');
     wrapper.className = 'option-wrapper';
 
@@ -2236,15 +2330,13 @@ function renderOptions(options) {
     btn.className = 'option-btn';
     btn.type = 'button';
     const fullFaction = FACTION_NAMES[opt.faction] || opt.faction;
-    btn.innerHTML = `<span class="option-btn__tag">Opción ${opt.id} · ${fullFaction}</span>${opt.text}`;
-    btn.addEventListener('click', () => applyOption(opt.modifiers, opt.nextSection, opt.id));
+    btn.innerHTML = `<span class="option-btn__tag">Opción ${index + 1} · ${fullFaction}</span>${opt.text}`;
+    btn.addEventListener('click', () => applyOption(opt.modifiers, opt.nextSection, opt.id, { faction: opt.faction }));
 
-    const hint = document.createElement('p');
-    hint.className = 'option-hint';
-    hint.textContent = generateAdvisorHint(opt.modifiers);
-
+    // La "Estimación técnica" del equipo asesor se retiró a propósito: daba
+    // demasiada pista sobre cuál era la mejor opción. generateAdvisorHint()
+    // se conserva más abajo por si se quiere reactivar, pero ya no se muestra.
     wrapper.appendChild(btn);
-    wrapper.appendChild(hint);
     DOM.options.appendChild(wrapper);
   });
 }
@@ -2456,8 +2548,7 @@ async function goBack() {
 
   updateStatusBar();
   updateVisualStage(GameState);
-  const section = await loadSectionData(GameState.currentSectionId);
-  await renderSection(section);
+  await renderCurrentPosition();
   updateNavButtons();
 }
 
@@ -2472,8 +2563,7 @@ async function goForward() {
 
   updateStatusBar();
   updateVisualStage(GameState);
-  const section = await loadSectionData(GameState.currentSectionId);
-  await renderSection(section);
+  await renderCurrentPosition();
   updateNavButtons();
 }
 
@@ -2735,23 +2825,100 @@ async function triggerIndicatorGameOver(key) {
 //     punto con números distintos según las decisiones tomadas).
 // ----------------------------------------------------------------------------
 
-const PHASE_TRANSITIONS = {
+const PHASE_BALANCES = {
   23: {
-    title: 'Fin de la Fase 1 — Contención de la Emergencia',
-    teaser: 'Contuviste el incendio inicial: la inflación desbocada, el desabastecimiento, un país al borde del estallido en tu primera madrugada de gobierno. Ahora viene algo distinto — las reformas estructurales de fondo: pensiones, salud, el sistema tributario. Ya no se trata de apagar el fuego, sino de reconstruir la casa.',
-    buttonLabel: 'Comenzar la Fase 2: Reformas Estructurales →'
+    title: 'Balance de la Fase 1 — Contención de la Emergencia',
+    nextTag: 'Fase 2 · Reformas Estructurales',
+    whatHappened: 'Tus primeros meses fueron de bombero: filas por pan y aceite, bodegas vacías y una mesa donde la CUT, la CPC y el Banco Central tiraban cada uno hacia su lado. Cerraste con el triage fiscal: qué gasto se sostiene y cuál no.',
+    lesson: 'En una emergencia manda la estabilización: frenar la inflación sin quebrar el empleo ni vaciar la caja. Las promesas sin respaldo se pagan después, y la confianza en tus reglas vale tanto como los números.',
+    nextFocus: [
+      'Vienen las reformas de fondo: pensiones, salud e impuestos. Pregúntate siempre quién gana, quién paga y cuánto tarda en notarse.',
+      'Una reforma sin respaldo político se revierte; una sin financiamiento queda en el papel.',
+      'Cuida el Tesoro: las reformas cuestan hoy y rinden en años.'
+    ]
   },
   151: {
-    title: 'Fin de la Fase 2 — Reformas Estructurales',
-    teaser: 'Las reformas de fondo ya están en marcha. Lo que viene ahora mira hacia afuera — negociaciones internacionales, tratados comerciales, el litio, el cobre. Chile empieza a definir su lugar en el mundo.',
-    buttonLabel: 'Comenzar la Fase 3: Apertura Comercial →'
+    title: 'Balance de la Fase 2 — Reformas Estructurales',
+    nextTag: 'Fase 3 · Apertura Comercial',
+    whatHappened: 'Entraste a las reformas de fondo: pensiones (AFP o reparto), salud, pacto fiscal e impuestos. La CUT pedía más Estado, la CPC defendía el mercado de capitales y el Congreso se trabó más de una vez. Cerraste con un cambio de gabinete.',
+    lesson: 'Las reformas cambian incentivos y tardan años en rendir. Hay que equilibrar solidaridad con sostenibilidad fiscal, y evitar que los nuevos organismos los capture quien tenga más fuerza: eso distingue a las instituciones inclusivas de las extractivas.',
+    nextFocus: [
+      'Se activan tres indicadores nuevos: Exportaciones, Aranceles e Inversión Extranjera (IED).',
+      'Abrirse al comercio da crecimiento, pero expone a shocks externos. Depender de un solo producto es un riesgo.',
+      'Los inversionistas buscan reglas claras: los giros bruscos se pagan caro.'
+    ]
   },
   226: {
-    title: 'Fin de la Fase 3 — Apertura Comercial y Crecimiento',
-    teaser: 'Con el país ya integrado al mundo, lo que viene en la Fase 4 es distinto a todo lo anterior: terremotos, pandemias, crisis que llegan sin ningún aviso previo. Es el tramo final de tu mandato — donde se define, de verdad, qué legado vas a dejar.',
-    buttonLabel: 'Comenzar la Fase 4: El Legado y Shocks Externos →'
+    title: 'Balance de la Fase 3 — Apertura Comercial',
+    nextTag: 'Fase 4 · Legado y Shocks Externos',
+    whatHappened: 'El mundo te golpeó y te abrió puertas: el desplome del cobre, los aranceles, los tratados de libre comercio, las patentes, el litio y la cuenta corriente. Después vinieron las apuestas de futuro: el hidrógeno verde, las monedas digitales, el corredor bioceánico y la fuga de talento.',
+    lesson: 'Abrir la economía trae crecimiento, pero importa cómo se reparte y se ahorra. Un país rico en recursos debe capturar su renta sin caer en la paradoja de la abundancia, ahorrar en los años buenos (fondos soberanos) e invertir en capital humano.',
+    nextFocus: [
+      'La Fase 4 trae shocks que no avisan: terremoto, crisis financiera, pandemia, ciberataques.',
+      'Lo que importa no es evitar el golpe, sino qué colchón tienes cuando llega: un Tesoro con margen y una sociedad poco tensionada.',
+      'Las instituciones limpias resisten mejor las crisis: la probidad también es resiliencia.'
+    ]
   }
 };
+
+/** Consejo breve por indicador, mostrado en el balance cuando ese indicador
+ *  llega cerca de su peor extremo. Habla de CONCEPTOS, no de qué opción elegir. */
+const PHASE_BALANCE_ADVICE = {
+  inflacion:            'los precios que suben erosionan salarios y paciencia social. El gasto sin respaldo la alimenta; la credibilidad del Banco Central la contiene.',
+  desempleo:            'sin trabajo formal no hay paz social ni ingresos para el Estado. La inversión y la confianza empresarial lo reactivan.',
+  tesoro_publico:       'sin caja, cualquier shock obliga a recortar o endeudarse. Primero ingresos sostenibles y gasto focalizado; después, nuevas promesas.',
+  inestabilidad_social: 'la legitimidad se gasta rápido. Las decisiones con diálogo y gradualidad cuestan menos políticamente que las impuestas.',
+  aprobacion_cut:       'sin apoyo de los trabajadores, las reformas se bloquean en la calle. Los acuerdos donde ellos también ganan duran más.',
+  aprobacion_cpc:       'sin confianza empresarial cae la inversión y el empleo. Las reglas estables pesan más que cualquier incentivo puntual.',
+  exportaciones:        'una economía abierta vive de vender afuera. Diversificar productos y mercados da resiliencia ante shocks.',
+  ied:                  'los inversionistas buscan estabilidad y reglas claras. Los giros bruscos los espantan.'
+};
+
+/**
+ * Lee el GameState real y arma la parte dinámica del balance: puntos fuertes,
+ * indicadores frágiles (con su consejo) y estado del Sello Institucional.
+ * Usa distanceToBadExtreme(), igual que el sistema de alertas, así que
+ * "frágil" significa cerca de su PEOR extremo según la dirección de cada variable.
+ */
+function buildPhaseStatus() {
+  const rows = [];
+  for (const key of INDICATOR_LOSS_KEYS) {
+    const value = GameState[key];
+    if (value === null || value === undefined) continue;
+    const dist = distanceToBadExtreme(key, value);
+    if (dist === null) continue;
+    rows.push({ key, dist, label: VARIABLE_META[key].label });
+  }
+  rows.sort((a, b) => a.dist - b.dist);
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  const lines = [];
+  const weak = rows.filter(r => r.dist <= 40).slice(0, 2);
+  const strong = rows.filter(r => r.dist >= 70).slice(-2).reverse();
+
+  if (strong.length) {
+    lines.push({ kind: 'good', text: 'Llegas con margen en ' + strong.map(r => r.label).join(' y ') + '.' });
+  }
+  if (weak.length) {
+    weak.forEach(r => lines.push({ kind: 'warn', text: cap(r.label) + ' está en zona frágil: ' + PHASE_BALANCE_ADVICE[r.key] }));
+  } else if (rows.length) {
+    const lowest = rows[0];
+    lines.push({ kind: 'note', text: 'Ningún indicador está en zona crítica. Tu punto más frágil es ' + lowest.label + ': mantenlo bajo vigilancia, porque el margen que tengas es tu colchón para lo que viene.' });
+  }
+
+  const inc = GameState.sello_inclusivo_count, ext = GameState.sello_extractivo_count;
+  const total = inc + ext;
+  if (total > 0) {
+    const pct = Math.round((inc / total) * 100);
+    if (ext > inc) {
+      lines.push({ kind: 'warn', text: 'Solo el ' + pct + '% de tus decisiones repartieron el poder. Las instituciones que se capturan pasan la cuenta al final del mandato.' });
+    } else {
+      lines.push({ kind: 'note', text: 'El ' + pct + '% de tus decisiones repartió el poder entre varios actores. Es una base sólida para las instituciones.' });
+    }
+  }
+  return lines;
+}
+
 
 /**
  * Genera, a partir del GameState real, un párrafo breve resumiendo qué
@@ -2855,34 +3022,407 @@ function maybeShowCrisisContextWarning(sectionId) {
 }
 
 async function maybeShowPhaseTransition(nextSectionId) {
-  const transition = PHASE_TRANSITIONS[nextSectionId];
-  if (!transition) return false;
+  const balance = PHASE_BALANCES[nextSectionId];
+  if (!balance) return false;
 
-  const composedSection = {
+  // Cabecera (título + eyebrow "Balance de fase") reutilizando renderSection;
+  // el contenido del balance se arma aparte, bloque por bloque.
+  await renderSection({
     id: `transition-${nextSectionId}`,
     phase: '—',
-    title: transition.title,
-    narrative: [transition.teaser, generatePhaseSummary()],
+    title: balance.title,
+    narrative: [],
     educationalBox: null,
     options: []
+  });
+
+  const addBlock = async (labelText, buildBody, extraClass) => {
+    const block = document.createElement('div');
+    block.className = 'phase-balance__block' + (extraClass ? ' ' + extraClass : '');
+    const label = document.createElement('span');
+    label.className = 'phase-balance__label';
+    label.textContent = labelText;
+    block.appendChild(label);
+    buildBody(block);
+    DOM.narrative.appendChild(block);
+    void block.offsetWidth;
+    block.classList.add('is-visible');
+    await wait(140);
   };
-  await renderSection(composedSection);
+  const addText = (block, text, cls) => {
+    const p = document.createElement('p');
+    p.className = 'phase-balance__text' + (cls ? ' ' + cls : '');
+    p.textContent = text;
+    block.appendChild(p);
+  };
+
+  // 1. Qué pasó
+  let happened = balance.whatHappened;
+  if (nextSectionId === 23 && GameState.imfTriggered) {
+    happened += ' Además, el Tesoro llegó a cero y tuviste que recibir a la misión técnica del FMI.';
+  }
+  await addBlock('Qué pasó', (b) => addText(b, happened));
+
+  // 2. Lo que había que trabajar
+  await addBlock('Lo que había que trabajar', (b) => addText(b, balance.lesson));
+
+  // 3. Tu situación hoy (dinámico, a partir del GameState)
+  const status = buildPhaseStatus();
+  if (status.length) {
+    await addBlock('Cómo llegas', (b) => {
+      status.forEach(line => addText(b, (line.kind === 'warn' ? '⚠ ' : line.kind === 'good' ? '✔ ' : '') + line.text, 'phase-balance__text--' + line.kind));
+    }, 'phase-balance__block--status');
+  }
+
+  // 4. Foco para la próxima fase
+  await addBlock('En qué enfocarte ahora', (b) => {
+    const ul = document.createElement('ul');
+    ul.className = 'phase-balance__list';
+    balance.nextFocus.forEach(t => {
+      const li = document.createElement('li');
+      li.textContent = t;
+      ul.appendChild(li);
+    });
+    b.appendChild(ul);
+  });
 
   const btn = document.createElement('button');
   btn.className = 'option-btn option-btn--prologue';
   btn.type = 'button';
-  btn.innerHTML = `<span class="option-btn__tag">Continuar</span>${transition.buttonLabel}`;
+  btn.innerHTML = `<span class="option-btn__tag">${balance.nextTag}</span>Continuar a la siguiente fase →`;
   btn.addEventListener('click', async () => {
+    GameState.pendingBalance = null; // el jugador ya leyó el balance
+    saveGame();
     window.scrollTo({ top: 0, behavior: 'smooth' });
     const realSection = await loadSectionData(nextSectionId);
     await renderSection(realSection);
     updateNavButtons();
-  });
+  }, { once: true });
   DOM.options.appendChild(btn);
   return true;
 }
 
-async function applyOption(modifiers, nextSectionId, optionId) {
+/** Muestra el punto actual del juego: el balance pendiente si el jugador
+ *  quedó justo en una transición de fase (por ejemplo, cerró la pestaña o
+ *  usó Adelante), o si no, la sección en la que está. */
+async function renderCurrentPosition() {
+  const pending = GameState.pendingBalance;
+  if (pending && pending === GameState.currentSectionId && PHASE_BALANCES[pending]) {
+    await maybeShowPhaseTransition(pending);
+    return;
+  }
+  const section = await loadSectionData(GameState.currentSectionId);
+  await renderSection(section);
+}
+
+// ----------------------------------------------------------------------------
+// 4f. ALEATORIEDAD — tres capas que se suman a los modificadores de cada
+//     decreto SIN alterar los números originales de las secciones:
+//
+//       1. Orden de las opciones barajado (la posición ya no delata cuál es
+//          la opción "segura").
+//       2. Implementación del decreto: aprobar una medida no garantiza que
+//          funcione. Puede salir plena, parcial o con tropiezos.
+//       3. Imprevistos: eventos externos (buenos y malos) que golpean más
+//          fuerte si el indicador relacionado ya estaba frágil.
+//
+//     Todo el azar sale de un generador con semilla guardada en el GameState,
+//     así que Atrás/Adelante y recargar la página NO permiten "relanzar el
+//     dado": la misma decisión desde el mismo estado da el mismo resultado.
+//     Para desactivar todo: RANDOM_CONFIG.enabled = false.
+// ----------------------------------------------------------------------------
+
+const RANDOM_CONFIG = {
+  enabled: true,
+  shuffleOptions: true,
+
+  // Probabilidades de implementación por facción. El consenso exige negociar,
+  // por eso es la que más se diluye. El resto se reparte por 'default'.
+  implementation: {
+    'Tercera Vía': { parcial: 0.36, tropiezo: 0.16 },
+    'default':     { parcial: 0.22, tropiezo: 0.10 }
+  },
+  partialFactor: 0.5,     // beneficio que llega en una implementación parcial
+  stumbleFactor: 0.25,    // beneficio que llega cuando tropieza
+  stumbleUnrest: 5,       // Inestabilidad extra cuando tropieza
+
+  // Imprevistos
+  eventChance: 0.42,      // probabilidad por decisión (si ya pasó el enfriamiento)
+  eventCooldown: 1,       // decisiones sin imprevisto entre uno y el siguiente
+  eventMinDecisions: 3,   // sin imprevistos en las primeras decisiones
+  badEventShare: 0.75,    // proporción de imprevistos negativos
+  weakThreshold: 35,      // indicador "frágil": a ≤35 pts de su peor extremo
+  strongThreshold: 65,    // indicador "sólido": a ≥65 pts de su peor extremo
+  weakMultiplier: 1.7,
+  strongMultiplier: 0.7
+};
+
+/** Generador pseudoaleatorio (mulberry32) con estado guardado en GameState. */
+function rngNext() {
+  GameState.rngState = (GameState.rngState + 0x6D2B79F5) >>> 0;
+  let t = GameState.rngState;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
+function rngPick(list) {
+  return list[Math.floor(rngNext() * list.length)];
+}
+
+/** Baraja las opciones de forma estable para una sección dada: no consume el
+ *  generador principal, así que volver a una sección muestra el mismo orden. */
+function shuffleOptionsForSection(options, sectionId) {
+  if (!RANDOM_CONFIG.enabled || !RANDOM_CONFIG.shuffleOptions || options.length < 2) return options;
+  let h = (2166136261 ^ (GameState.shuffleSeed >>> 0)) >>> 0;
+  const key = String(sectionId);
+  for (let i = 0; i < key.length; i++) {
+    h = Math.imul(h ^ key.charCodeAt(i), 16777619) >>> 0;
+  }
+  let a = h;
+  const rnd = () => {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const out = options.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    const tmp = out[i]; out[i] = out[j]; out[j] = tmp;
+  }
+  return out;
+}
+
+const IMPLEMENTATION_TEXT = {
+  parcial: [
+    'El decreto se aprobó, pero la tramitación y los ajustes en el Congreso dejaron solo la mitad de los beneficios que se esperaban. Los costos, en cambio, llegaron completos.',
+    'La medida avanza más lento de lo previsto: faltan reglamentos, y los servicios públicos no alcanzan a aplicarla bien. El beneficio llega a medias.'
+  ],
+  parcialConsenso: [
+    'El acuerdo transversal se mantuvo, pero cada sector exigió cambios y el texto final quedó diluido. Los beneficios llegan a medias.',
+    'Lograr consenso tomó más tiempo del previsto y la reforma salió recortada. Sigue siendo un avance, pero menor al que se anunció.'
+  ],
+  tropiezo: [
+    'La implementación tropezó: errores administrativos, recursos judiciales y filtraciones restaron casi todo el beneficio y encendieron las críticas.',
+    'El decreto se aplicó con desorden y generó más ruido que resultados. Una parte de la ciudadanía siente que se prometió más de lo que se cumplió.'
+  ]
+};
+
+/**
+ * Decide cómo resulta la implementación de un decreto. Solo aplica si la
+ * opción tiene algún beneficio claro (≥3 pts en dirección favorable); si no,
+ * no hay nada que diluir.
+ * @returns {{modifiers:Object, notes:Array, tier:string}}
+ */
+function rollImplementation(modifiers, faction) {
+  const none = { modifiers: modifiers, notes: [], tier: 'pleno' };
+  if (!RANDOM_CONFIG.enabled) return none;
+
+  let hasBenefit = false;
+  for (const [k, d] of Object.entries(modifiers)) {
+    if (k === 'sello' || typeof d !== 'number') continue;
+    const meta = VARIABLE_META[k];
+    if (meta && meta.goodDirection !== 0 && Math.sign(d) === meta.goodDirection && Math.abs(d) >= 3) {
+      hasBenefit = true;
+      break;
+    }
+  }
+  if (!hasBenefit) return none;
+
+  const cfg = RANDOM_CONFIG.implementation[faction] || RANDOM_CONFIG.implementation['default'];
+  const r = rngNext();
+  let tier = 'pleno';
+  if (r < cfg.tropiezo) tier = 'tropiezo';
+  else if (r < cfg.tropiezo + cfg.parcial) tier = 'parcial';
+  if (tier === 'pleno') return none;
+
+  const factor = tier === 'parcial' ? RANDOM_CONFIG.partialFactor : RANDOM_CONFIG.stumbleFactor;
+  const out = Object.assign({}, modifiers);
+  for (const [k, d] of Object.entries(modifiers)) {
+    if (k === 'sello' || typeof d !== 'number' || d === 0) continue;
+    const meta = VARIABLE_META[k];
+    if (meta && meta.goodDirection !== 0 && Math.sign(d) === meta.goodDirection) {
+      out[k] = Math.round(d * factor);
+    }
+  }
+  if (tier === 'tropiezo') {
+    out.inestabilidad_social = (typeof out.inestabilidad_social === 'number' ? out.inestabilidad_social : 0) + RANDOM_CONFIG.stumbleUnrest;
+  }
+
+  const pool = tier === 'tropiezo'
+    ? IMPLEMENTATION_TEXT.tropiezo
+    : (faction === 'Tercera Vía' ? IMPLEMENTATION_TEXT.parcialConsenso : IMPLEMENTATION_TEXT.parcial);
+  const notes = [{
+    kind: 'implementacion',
+    tone: 'bad',
+    label: tier === 'parcial' ? 'Implementación parcial' : 'Implementación con tropiezos',
+    text: rngPick(pool),
+    lesson: 'Aprobar una medida no es lo mismo que lograr sus resultados: la capacidad del Estado para ejecutarla también cuenta.'
+  }];
+  return { modifiers: out, notes: notes, tier: tier };
+}
+
+// Imprevistos. 'watch' es la variable que decide si el golpe se amortigua o se
+// agrava; 'watchText' es cómo se nombra en el texto.
+const RANDOM_EVENTS = [
+  // ---- Negativos, todas las fases ----
+  { id: 'paro_camioneros', tone: 'bad', phases: ['1', '2', '3', '4'],
+    title: 'Paro de camioneros',
+    text: 'Los transportistas bloquean carreteras por el alza del combustible. Los precios suben en los mercados y crece la tensión en las ciudades.',
+    effects: { inflacion: 4, inestabilidad_social: 5, tesoro_publico: -2 },
+    watch: 'inestabilidad_social', watchText: 'la estabilidad social',
+    lesson: 'Los costos de transporte se traspasan a los precios: un paro logístico es un shock de oferta.' },
+  { id: 'rumor_bancario', tone: 'bad', phases: ['1', '2', '3', '4'],
+    title: 'Rumor de corrida bancaria',
+    text: 'Un rumor en redes sociales sobre la solvencia de un banco mediano provoca filas en los cajeros. No es cierto, pero el daño a la confianza ya está hecho.',
+    effects: { tesoro_publico: -4, inestabilidad_social: 4, ied: -3 },
+    watch: 'tesoro_publico', watchText: 'el colchón fiscal',
+    lesson: 'En el sistema financiero la confianza pesa tanto como los números: una corrida puede cumplirse a sí misma.' },
+  { id: 'alza_petroleo', tone: 'bad', phases: ['1', '2', '3', '4'],
+    title: 'Alza internacional del petróleo',
+    text: 'El precio del crudo sube en los mercados internacionales por tensiones en los países productores.',
+    effects: { inflacion: 5, tesoro_publico: -3 },
+    watch: 'tesoro_publico', watchText: 'el colchón fiscal',
+    lesson: 'Chile importa casi todo su petróleo: el precio internacional se filtra a la inflación y al gasto público.' },
+  { id: 'temporal', tone: 'bad', phases: ['1', '2', '3', '4'],
+    title: 'Temporal en el centro-sur',
+    text: 'Un fuerte sistema frontal deja familias damnificadas y caminos cortados. El Estado debe destinar recursos de emergencia.',
+    effects: { tesoro_publico: -4, inestabilidad_social: 3 },
+    watch: 'tesoro_publico', watchText: 'el colchón fiscal',
+    lesson: 'Un fondo de contingencia permite responder a una emergencia sin desfinanciar el resto del presupuesto.' },
+  { id: 'paro_publico', tone: 'bad', phases: ['1', '2', '3', '4'],
+    title: 'Paro del sector público',
+    text: 'Los gremios del Estado se declaran en paro. Hospitales, registros civiles y colegios funcionan a media máquina.',
+    effects: { inestabilidad_social: 6, aprobacion_cut: -3 },
+    watch: 'aprobacion_cut', watchText: 'el diálogo con los trabajadores',
+    lesson: 'Mantener canales abiertos con los gremios reduce el costo de los conflictos laborales.' },
+  { id: 'reportaje', tone: 'bad', phases: ['1', '2', '3', '4'],
+    title: 'Reportaje sobre gastos reservados',
+    text: 'Un medio publica una investigación sobre gastos reservados en el aparato público. Aunque no involucra a tu gobierno directamente, la desconfianza hacia las autoridades se contagia.',
+    effects: { aprobacion_cut: -3, aprobacion_cpc: -3, inestabilidad_social: 3 },
+    lesson: 'La transparencia es un activo político: la desconfianza hacia las instituciones se extiende a todos sus actores.' },
+
+  // ---- Negativos, solo cuando hay economía abierta (Fases III y IV) ----
+  { id: 'cobre_cae', tone: 'bad', phases: ['3', '4'],
+    title: 'Caída del precio del cobre',
+    text: 'El cobre cae en la bolsa de Londres por una desaceleración de la demanda en Asia. Los ingresos fiscales y las exportaciones lo resienten.',
+    effects: { tesoro_publico: -5, exportaciones: -6, ied: -3 },
+    watch: 'exportaciones', watchText: 'la diversificación exportadora',
+    lesson: 'Depender de un solo producto expone al país a los vaivenes de su precio internacional.' },
+  { id: 'guerra_comercial', tone: 'bad', phases: ['3', '4'],
+    title: 'Tensión comercial entre potencias',
+    text: 'Dos grandes economías se imponen aranceles mutuos. Los mercados se vuelven cautelosos y los inversionistas postergan decisiones.',
+    effects: { exportaciones: -6, ied: -4 },
+    watch: 'ied', watchText: 'la confianza de los inversionistas',
+    lesson: 'Una economía abierta amplifica los shocks externos, pero también multiplica las oportunidades.' },
+  { id: 'dolar_volatil', tone: 'bad', phases: ['3', '4'],
+    title: 'Volatilidad del dólar',
+    text: 'El dólar se dispara en pocas semanas. Importar se encarece, y los inversionistas esperan antes de comprometer capital.',
+    effects: { inflacion: 4, ied: -3, tesoro_publico: -2 },
+    watch: 'ied', watchText: 'la confianza de los inversionistas',
+    lesson: 'El tipo de cambio traspasa inflación a través de los bienes importados.' },
+
+  // ---- Positivos ----
+  { id: 'temporada_fruta', tone: 'good', phases: ['1', '2', '3', '4'],
+    title: 'Temporada agrícola récord',
+    text: 'La fruta de exportación tiene una cosecha excepcional. Se contratan temporeros y entran divisas.',
+    effects: { desempleo: -3, tesoro_publico: 3, inflacion: -2 },
+    lesson: 'Los sectores exportadores generan empleo y divisas, pero dependen del clima y de la demanda externa.' },
+  { id: 'petroleo_baja', tone: 'good', phases: ['1', '2', '3', '4'],
+    title: 'Alivio en los combustibles',
+    text: 'El precio internacional del petróleo baja y los combustibles se abaratan. Transportar bienes cuesta menos.',
+    effects: { inflacion: -4, tesoro_publico: 2 },
+    lesson: 'Un shock de oferta favorable ayuda a bajar la inflación sin sacrificar empleo.' },
+  { id: 'acuerdo_gremial', tone: 'good', phases: ['1', '2', '3', '4'],
+    title: 'Acuerdo gremial inesperado',
+    text: 'Sindicatos y empresarios anuncian por su cuenta un acuerdo de productividad y reajuste. El clima social se distiende.',
+    effects: { inestabilidad_social: -5, aprobacion_cut: 3, aprobacion_cpc: 3 },
+    lesson: 'Cuando los actores sociales negocian entre sí, el Estado no carga solo con el conflicto.' },
+  { id: 'cobre_sube', tone: 'good', phases: ['3', '4'],
+    title: 'Repunte del precio del cobre',
+    text: 'El cobre sube con fuerza por una mayor demanda mundial. Entran más ingresos fiscales y mejoran las exportaciones.',
+    effects: { tesoro_publico: 5, exportaciones: 5, ied: 3 },
+    lesson: 'Un auge de precios es una oportunidad para ahorrar: gastarlo todo deja al país sin colchón cuando el ciclo se revierte.' },
+  { id: 'inversion_anuncio', tone: 'good', phases: ['3', '4'],
+    title: 'Nuevo proyecto de inversión',
+    text: 'Una empresa extranjera anuncia una planta industrial en el país, atraída por la estabilidad de las reglas.',
+    effects: { ied: 6, desempleo: -3 },
+    lesson: 'Reglas claras y estables atraen inversión de largo plazo.' }
+];
+
+function currentPhaseOf(sectionId) {
+  const sec = MERGED_SECTIONS[String(sectionId)];
+  return sec && sec.phase !== undefined ? String(sec.phase) : null;
+}
+
+/**
+ * Tira el dado de imprevistos. Si ocurre uno, aplica sus efectos directamente
+ * al GameState (con clamp) y devuelve la nota para mostrar al jugador.
+ * Debe llamarse DESPUÉS de aplicar los modificadores del decreto.
+ */
+function maybeRollRandomEvent(sectionId) {
+  if (!RANDOM_CONFIG.enabled) return null;
+
+  if (GameState.eventCooldown > 0) {
+    GameState.eventCooldown--;
+    return null;
+  }
+  if (GameState.history.length < RANDOM_CONFIG.eventMinDecisions) return null;
+  if (rngNext() >= RANDOM_CONFIG.eventChance) return null;
+
+  const phase = currentPhaseOf(sectionId);
+  const wantBad = rngNext() < RANDOM_CONFIG.badEventShare;
+
+  const eligible = RANDOM_EVENTS.filter(ev =>
+    (!phase || ev.phases.indexOf(phase) !== -1) &&
+    Object.keys(ev.effects).some(k => GameState[k] !== null && GameState[k] !== undefined)
+  );
+  let pool = eligible.filter(ev => (ev.tone === 'bad') === wantBad);
+  if (pool.length === 0) pool = eligible;
+  if (pool.length === 0) return null;
+
+  const ev = rngPick(pool);
+  GameState.eventCooldown = RANDOM_CONFIG.eventCooldown;
+
+  // ¿El indicador clave estaba sólido o frágil?
+  let buffer = null;
+  if (ev.tone === 'bad' && ev.watch && GameState[ev.watch] !== null) {
+    const dist = distanceToBadExtreme(ev.watch, GameState[ev.watch]);
+    if (dist !== null) {
+      if (dist <= RANDOM_CONFIG.weakThreshold) buffer = 'weak';
+      else if (dist >= RANDOM_CONFIG.strongThreshold) buffer = 'strong';
+    }
+  }
+
+  for (const [k, d] of Object.entries(ev.effects)) {
+    if (GameState[k] === null || GameState[k] === undefined) continue;
+    let amount = d;
+    const meta = VARIABLE_META[k];
+    const isHarm = meta && meta.goodDirection !== 0 && Math.sign(d) === -meta.goodDirection;
+    if (isHarm && buffer === 'weak') amount = Math.round(d * RANDOM_CONFIG.weakMultiplier);
+    if (isHarm && buffer === 'strong') amount = Math.round(d * RANDOM_CONFIG.strongMultiplier);
+    GameState[k] = CLAMPED_KEYS.indexOf(k) !== -1 ? clamp(GameState[k] + amount) : GameState[k] + amount;
+  }
+
+  let extra = '';
+  if (buffer === 'strong') extra = ' Tener ' + ev.watchText + ' bien provista amortiguó parte del impacto.';
+  if (buffer === 'weak') extra = ' Con ' + ev.watchText + ' tan frágil, el impacto fue mayor de lo normal.';
+  // Corrige género/número para que "provista" no suene raro con cualquier sustantivo.
+  extra = extra.replace(' bien provista', ' en buen estado');
+
+  return {
+    kind: 'imprevisto',
+    tone: ev.tone,
+    label: 'Imprevisto: ' + ev.title,
+    text: ev.text + extra,
+    lesson: ev.lesson,
+    id: ev.id
+  };
+}
+
+async function applyOption(modifiers, nextSectionId, optionId, optionMeta) {
   // Sonido de página pasando — el primer momento posible, justo al elegir
   // el decreto, antes de cualquier otro procesamiento.
   playPageTurnSound();
@@ -2905,6 +3445,16 @@ async function applyOption(modifiers, nextSectionId, optionId) {
     timestamp: Date.now()
   });
 
+  // 0a. Aleatoriedad, capa 1: ¿cómo resulta la implementación del decreto?
+  //     Solo aplica a decretos elegidos por el jugador (optionMeta), no a las
+  //     secciones de avance automático (ej. 22-B).
+  const randomNotes = [];
+  if (RANDOM_CONFIG.enabled && optionMeta) {
+    const impl = rollImplementation(modifiers, optionMeta.faction);
+    modifiers = impl.modifiers;
+    impl.notes.forEach(n => randomNotes.push(n));
+  }
+
   // 0b. Snapshot "antes" de las 9 variables numéricas, para poder calcular
   //     el delta REAL (post-clamp, post-sello, post-ingreso fiscal base) que
   //     se le muestra al jugador — no el delta bruto del JSON, que puede no
@@ -2922,6 +3472,14 @@ async function applyOption(modifiers, nextSectionId, optionId) {
 
     const raw = GameState[key] + delta;
     GameState[key] = CLAMPED_KEYS.includes(key) ? clamp(raw) : raw;
+  }
+
+  // 1a. Aleatoriedad, capa 2: imprevistos externos. Se aplican ANTES de la
+  //     captura del colapso del Tesoro (1b) para que la Intervención del FMI
+  //     siga funcionando igual si un imprevisto empuja el Tesoro a 0.
+  if (RANDOM_CONFIG.enabled && optionMeta) {
+    const eventNote = maybeRollRandomEvent(GameState.currentSectionId);
+    if (eventNote) randomNotes.push(eventNote);
   }
 
   // 1b. Captura del colapso ANTES de sumar el ingreso fiscal base (paso 2b).
@@ -2979,7 +3537,7 @@ async function applyOption(modifiers, nextSectionId, optionId) {
   //     Se inyecta con el mismo efecto líquido is-entering -> is-visible que
   //     usa renderSection(), y se muestra antes de saltar a la siguiente
   //     sección, para que la decisión "pese" narrativamente un instante.
-  await showImpactParagraph(generateImpactParagraph(modifiers, modifiers.sello));
+  await showImpactParagraph(generateImpactParagraph(modifiers, modifiers.sello), randomNotes);
 
   // 4. Guardrail narrativo: mecánica de Intervención del FMI. Usa la bandera
   //    capturada en el paso 1b, NO el tesoro_publico actual (que ya incluye
@@ -2994,6 +3552,7 @@ async function applyOption(modifiers, nextSectionId, optionId) {
 
   // 5. Navegación
   GameState.currentSectionId = nextSectionId;
+  GameState.pendingBalance = PHASE_BALANCES[nextSectionId] ? nextSectionId : null;
 
   // 5b. Autosave: se guarda el estado YA con la sección de destino final
   //     (después del guardrail del FMI, si aplicó). Si el jugador cierra la
@@ -3218,7 +3777,7 @@ const IMPACT_FLAVOR_TEXT = {
  * @param {string} text
  * @returns {Promise<void>} se resuelve cuando el jugador hace clic en Continuar.
  */
-function showImpactParagraph(text) {
+function showImpactParagraph(text, notes) {
   return new Promise((resolve) => {
     const wrapper = document.createElement('div');
     wrapper.className = 'impact-wrapper is-entering';
@@ -3246,6 +3805,28 @@ function showImpactParagraph(text) {
 
     wrapper.appendChild(label);
     wrapper.appendChild(p);
+
+    // Notas de aleatoriedad (implementación del decreto / imprevistos), si hubo.
+    (notes || []).forEach((note) => {
+      const box = document.createElement('div');
+      box.className = 'impact-extra impact-extra--' + (note.tone === 'good' ? 'good' : 'bad');
+      const head = document.createElement('span');
+      head.className = 'impact-extra__label';
+      head.textContent = note.label;
+      const body = document.createElement('p');
+      body.className = 'impact-extra__text';
+      body.textContent = note.text;
+      box.appendChild(head);
+      box.appendChild(body);
+      if (note.lesson) {
+        const lesson = document.createElement('p');
+        lesson.className = 'impact-extra__lesson';
+        lesson.textContent = '📘 ' + note.lesson;
+        box.appendChild(lesson);
+      }
+      wrapper.appendChild(box);
+    });
+
     wrapper.appendChild(btn);
     DOM.narrative.appendChild(wrapper);
 
@@ -3627,8 +4208,7 @@ async function continueSavedGame() {
   updateStatusBar();
   updateVisualStage(GameState);
 
-  const section = await loadSectionData(GameState.currentSectionId);
-  await renderSection(section);
+  await renderCurrentPosition();
 }
 
 async function initGame() {
